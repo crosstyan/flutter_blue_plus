@@ -30,6 +30,8 @@ package com.boskokg.flutter_blue_plus;
 import com.google.protobuf.ByteString;
 import com.boskokg.flutter_blue_plus.Protos.AdvertisementData;
 
+import android.util.Pair;
+
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -41,6 +43,25 @@ import java.util.UUID;
 class AdvertisementParser {
 
   /**
+   *
+   * Of the 62 bytes. 31 are from the advertising packet,
+   * and 31 are from the scan response packet.
+   * So I want to split the data into two parts.
+   *
+   * @param rawData
+   * @return pair of raw bytes array of advertisement data and scan response data
+   * @see <a href=https://github.com/AltBeacon/android-beacon-library/issues/30>Does Android BLE scanner ask scan response by default?</a>
+   */
+  static Pair<byte[], byte[]> splitAdData(byte[] rawData){
+    ByteBuffer data = ByteBuffer.wrap(rawData);
+    byte[] adData = new byte[31];
+    data.get(adData, 0, 31);
+    byte[] resp = new byte[data.remaining()];
+    data.get(resp, 0, data.remaining());
+    return Pair(adData, resp);
+  }
+
+  /**
    * Parses packet data into {@link AdvertisementData} structure.
    *
    * @param rawData The scan record data.
@@ -48,7 +69,13 @@ class AdvertisementParser {
    * @throws ArrayIndexOutOfBoundsException if the input is truncated.
    */
   static AdvertisementData parse(byte[] rawData) {
-    ByteBuffer data = ByteBuffer.wrap(rawData).asReadOnlyBuffer().order(ByteOrder.LITTLE_ENDIAN);
+    ByteBuffer data;
+    if (rawData.length > 31) {
+      var ad = AdvertisementParser.splitAdData(rawData).first;
+        data = ByteBuffer.wrap(ad).asReadOnlyBuffer().order(ByteOrder.LITTLE_ENDIAN);
+    } else {
+      data = ByteBuffer.wrap(rawData).asReadOnlyBuffer().order(ByteOrder.LITTLE_ENDIAN);
+    }
     AdvertisementData.Builder ret = AdvertisementData.newBuilder();
     boolean seenLongLocalName = false;
     do {
