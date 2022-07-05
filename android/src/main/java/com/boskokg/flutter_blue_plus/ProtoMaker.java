@@ -75,6 +75,18 @@ public class ProtoMaker {
                     a.putManufacturerData(key, ByteString.copyFrom(value));
                 }
             }
+            // I'm doing a heck specific to Android platform, which is dirty.
+            // The behaviour of iOS is concat all of the manufacture data
+            // But Android just take the last manufacture data, which is included
+            // in scan response
+            // I don't want to add a raw bytes field since iOS hasn't open
+            // the interface.
+            // See https://developer.apple.com/documentation/corebluetooth/cbcentralmanagerdelegate/advertisement_data_retrieval_keys
+            // I don't want to write a generic parser either, but we should
+            // keep the behaviour the same across two platform.
+            // The best way is write a new parser, but I'm lazy.
+            byte[] rawBytes = scanRecord.getBytes();
+            a.putManufacturerData(0xffff, ByteString.copyFrom(rawBytes));
             // Service Data
             Map<ParcelUuid, byte[]> serviceData = scanRecord.getServiceData();
             if(serviceData != null) {
