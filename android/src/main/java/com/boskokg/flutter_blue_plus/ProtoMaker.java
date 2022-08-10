@@ -84,7 +84,7 @@ public class ProtoMaker {
             // See https://developer.apple.com/documentation/corebluetooth/cbcentralmanagerdelegate/advertisement_data_retrieval_keys
             // I don't want to write a generic parser either, but we should
             // keep the behaviour the same across two platform.
-            // The best way is write a new parser, but I'm lazy.
+            // the best way is write a new parser, but i'm lazy
             byte[] rawBytes = scanRecord.getBytes();
             a.putManufacturerData(0xffff, ByteString.copyFrom(rawBytes));
             // Service Data
